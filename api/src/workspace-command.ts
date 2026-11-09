@@ -6,6 +6,7 @@ import { aggregateBashExtras, ensureNodeModulesSymlink } from './job';
 import { execute, type NsJailResult } from './nsjail';
 import { getLatestRuntimeMatchingLanguageVersion } from './runtime';
 import type { Runtime } from './runtime';
+import { SANDBOX_DEFAULT_ENV } from './sandbox-env';
 
 const COMMAND_MAX_BYTES = 32 * 1024;
 const COMMAND_MAX_TIMEOUT_MS = 5 * 60_000;
@@ -165,6 +166,7 @@ export async function executeWorkspaceCommand(
   const runtime = options.runtime ?? getLatestRuntimeMatchingLanguageVersion('bash', '*');
   if (!runtime) throw new Error('Bash runtime is unavailable');
   const envVars = {
+    ...SANDBOX_DEFAULT_ENV,
     ...runtime.env_vars,
     HOME: '/mnt/data',
     SANDBOX_LANGUAGE: 'bash',

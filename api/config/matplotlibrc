@@ -1,0 +1,10 @@
+# Sandbox-wide matplotlib defaults, loaded through MATPLOTLIBRC.
+#
+# Glyph fallback only walks the concrete fonts that font.family resolves to,
+# and a generic family such as sans-serif resolves to the first installed
+# entry of its list alone. The CJK face therefore leads each list (it also
+# covers Latin), and DejaVu follows in font.family for symbols Noto lacks.
+font.family:     sans-serif, DejaVu Sans
+font.sans-serif: Noto Sans CJK TC, Noto Sans CJK JP, DejaVu Sans, Bitstream Vera Sans
+font.serif:      Noto Serif CJK TC, Noto Serif CJK JP, DejaVu Serif
+font.monospace:  Noto Sans Mono CJK TC, Noto Sans Mono CJK JP, DejaVu Sans Mono

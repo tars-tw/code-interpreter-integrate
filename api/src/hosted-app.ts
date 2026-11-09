@@ -11,6 +11,7 @@ import { logger } from './logger';
 import { getLatestRuntimeMatchingLanguageVersion, getRuntimes, type Runtime } from './runtime';
 import { getBoundSessionWorkspace, type SessionWorkspace } from './session-workspace';
 import { ValidationError, validateFilePath } from './validation';
+import { SANDBOX_DEFAULT_ENV } from './sandbox-env';
 
 // Capture bounded diagnostics through an anonymous pipe; execFile's runtime
 // capture would create socketpairs prohibited by the supervisor policy.
@@ -621,6 +622,7 @@ export class HostedAppSupervisor {
       }
     }
     const env: NodeJS.ProcessEnv = {
+      ...SANDBOX_DEFAULT_ENV,
       ...callerEnv,
       ...runtimeEnv,
       HOME: ownership.dir,

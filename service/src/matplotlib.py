@@ -32,7 +32,6 @@ matplotlib.rcParams.update({
     'savefig.dpi': 150,             # Cap savefig DPI for performance
     'figure.max_open_warning': 0,   # Disable warning spam
     'axes.formatter.useoffset': False,
-    'font.family': 'DejaVu Sans',   # Use a font that's pre-cached
     'text.usetex': False,           # Disable LaTeX (slow)
     'svg.fonttype': 'none',         # Don't embed fonts in SVG
 })

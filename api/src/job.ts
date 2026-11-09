@@ -45,6 +45,7 @@ import {
 } from './validation';
 import { fetchCachedHttpInput } from './http-input-cache';
 import { cachedInputResponse, inputCacheKey, openCachedInput } from './session-inputs';
+import { SANDBOX_DEFAULT_ENV } from './sandbox-env';
 
 export {
   DIRKEEP,
@@ -1620,6 +1621,7 @@ export class Job {
     const filteredExtra = filterExtraEnvVars(this.extra_env_vars);
 
     const envVars: Record<string, string> = {
+      ...SANDBOX_DEFAULT_ENV,
       ...filteredExtra,
       OPENBLAS_NUM_THREADS: '1',
       MKL_NUM_THREADS: '1',

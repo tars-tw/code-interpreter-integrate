@@ -105,6 +105,7 @@ RUN apt-get update && \
     poppler-utils \
     fonts-dejavu \
     fonts-liberation \
+    fonts-noto-cjk \
     libnl-route-3-200 \
     libprotobuf32 \
     libffi8 \
@@ -126,6 +127,8 @@ RUN apt-get update && \
 RUN [ -x /usr/bin/mawk ] && ln -sf /usr/bin/mawk /usr/bin/awk
 
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
+
+COPY api/config/matplotlibrc /usr/share/matplotlib/matplotlibrc
 
 COPY --from=nsjail-builder /nsjail/nsjail /usr/sbin/nsjail
 COPY --from=nsjail-builder /usr/local/bin/spec-guard /usr/local/bin/spec-guard

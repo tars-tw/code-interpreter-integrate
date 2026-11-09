@@ -1,0 +1,44 @@
+# TARS 客戶部署用 override（無 KVM、NsJail 模式；和 TARS 同一台主機）
+# 搭配：COMPOSE_FILE=docker-compose.yaml:docker-compose.mac.yml:docker-compose.tars-prod.yml
+# 說明：tars-deploy 的 docs/CODE_INTERPRETER.md §1.4
+services:
+  api:
+    image: ${CI_REGISTRY:?請在 .env 設定 CI_REGISTRY}/code-interpreter-api:${CI_IMAGE_TAG:?請在 .env 設定 CI_IMAGE_TAG}
+    restart: always
+    ports: !reset []
+    networks:
+      default: {}
+      tars-net:
+        aliases:
+          - tars_code_interpreter
+  service-worker:
+    image: ${CI_REGISTRY:?請在 .env 設定 CI_REGISTRY}/code-interpreter-service-worker:${CI_IMAGE_TAG:?請在 .env 設定 CI_IMAGE_TAG}
+    restart: always
+  egress_gateway:
+    image: ${CI_REGISTRY:?請在 .env 設定 CI_REGISTRY}/code-interpreter-egress-gateway:${CI_IMAGE_TAG:?請在 .env 設定 CI_IMAGE_TAG}
+    restart: always
+    ports: !reset []
+  tool_call_server:
+    image: ${CI_REGISTRY:?請在 .env 設定 CI_REGISTRY}/code-interpreter-tool-call-server:${CI_IMAGE_TAG:?請在 .env 設定 CI_IMAGE_TAG}
+    restart: always
+  sandbox-runner:
+    image: ${CI_REGISTRY:?請在 .env 設定 CI_REGISTRY}/code-interpreter-sandbox-runner:${CI_IMAGE_TAG:?請在 .env 設定 CI_IMAGE_TAG}
+    ports: !reset []
+    volumes: !reset []      # 執行環境已包在 image 的 /pkgs，不從主機掛
+    security_opt:
+      - apparmor=unconfined
+  file_server:
+    image: ${CI_REGISTRY:?請在 .env 設定 CI_REGISTRY}/code-interpreter-file-server:${CI_IMAGE_TAG:?請在 .env 設定 CI_IMAGE_TAG}
+    restart: always
+    ports: !reset []
+  redis:
+    restart: always
+    ports: !reset []
+  minio:
+    image: milvusdb/minio:RELEASE.2024-12-18T13-15-44Z
+    restart: always
+    ports: !reset []
+
+networks:
+  tars-net:
+    external: true

@@ -228,6 +228,13 @@ install_python_packages() {
     fi
 
     docker exec "$CONTAINER_NAME" "$pip_path" install --upgrade six 2>/dev/null || true
+    # Its own directory: copying python-runtime again would nest it inside
+    # the copy install_python made.
+    docker cp "$SCRIPT_DIR/docker/python-runtime" "$CONTAINER_NAME:/tmp/cjk-runtime"
+    if ! docker exec "$CONTAINER_NAME" "/pkgs/python/${PYTHON_VERSION}/bin/python3" -I /tmp/cjk-runtime/cjk_defaults.py; then
+        echo "ERROR: applying CJK document defaults failed"
+        return 1
+    fi
     if [ "$python_packages_installed" = true ]; then
         docker exec "$CONTAINER_NAME" bash -c "echo \$(date +%s)000 > /pkgs/python/${PYTHON_VERSION}/.package-installed"
     fi
@@ -468,6 +475,22 @@ install_bun_packages() {
     docker exec "$CONTAINER_NAME" bash -c "cd ${pkg_dest} && BUN_INSTALL=${pkg_dest} ./bun pm ls -g 2>/dev/null | head -40" || true
 }
 
+apply_cjk_js_defaults() {
+    if [ "${SKIP_JS_PACKAGES:-}" = "1" ]; then
+        return 0
+    fi
+    local prefixes=()
+    [ "${SKIP_NODE:-}" = "1" ] || prefixes+=("/pkgs/node/${NODE_VERSION}")
+    [ "${SKIP_BUN:-}" = "1" ] || prefixes+=("/pkgs/bun/${BUN_VERSION}")
+    if [ "${#prefixes[@]}" -eq 0 ]; then
+        return 0
+    fi
+    if ! docker exec "$CONTAINER_NAME" "/pkgs/python/${PYTHON_VERSION}/bin/python3" -I /tmp/cjk-runtime/cjk_defaults.py --js "${prefixes[@]}"; then
+        echo "ERROR: applying CJK JavaScript defaults failed"
+        return 1
+    fi
+}
+
 install_bash() {
     local bash_package_version
     bash_package_version="${BASH_PACKAGE_VERSION:-5.2.0}"
@@ -550,6 +573,7 @@ main() {
     install_node_packages
     install_bun
     install_bun_packages
+    apply_cjk_js_defaults
     install_bash
 
     echo "Setting permissions..."

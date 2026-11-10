@@ -155,8 +155,26 @@ EOF
     mv -f "$launcher" "${destination}/run"
 }
 
+# Idempotent, so they also upgrade package sets installed before they existed.
+apply_cjk_defaults() {
+    if ! "$1/bin/python3" -I "${SCRIPT_DIR}/python-runtime/cjk_defaults.py"; then
+        echo "ERROR: applying CJK document defaults failed"
+        return 1
+    fi
+}
+
+# Patches pdf-lib, pptxgenjs and exceljs in the given Node/Bun trees, using the package Python.
+apply_cjk_js_defaults() {
+    if ! "/pkgs/python/${PYTHON_VERSION}/bin/python3" -I "${SCRIPT_DIR}/python-runtime/cjk_defaults.py" --js "$@"; then
+        echo "ERROR: applying CJK JavaScript defaults failed"
+        return 1
+    fi
+}
+
 if [ -f "$MARKER_FILE" ] && [ "$FORCE_REBUILD" != "true" ]; then
     if packages_ready; then
+        apply_cjk_defaults "/pkgs/python/${PYTHON_VERSION}" || exit 1
+        apply_cjk_js_defaults "/pkgs/node/${NODE_VERSION}" "/pkgs/bun/${BUN_VERSION}" || exit 1
         write_node_launcher "/pkgs/node/${NODE_VERSION}"
         write_bun_launcher "/pkgs/bun/${BUN_VERSION}"
         echo "Packages already initialized (marker file exists)"
@@ -304,6 +322,10 @@ if [ -f "$PIP_PATH" ]; then
     fi
 
     "$PIP_PATH" install --upgrade six 2>/dev/null || true
+    if [ "$PYTHON_PACKAGES_INSTALLED" = true ] && ! apply_cjk_defaults "$PKG_DEST"; then
+        INSTALL_FAILED=true
+        PYTHON_PACKAGES_INSTALLED=false
+    fi
     if [ "$PYTHON_PACKAGES_INSTALLED" = true ]; then
         echo "$(date +%s)000" > "$PKG_DEST/.package-installed"
     fi
@@ -526,6 +548,10 @@ elif [ "$BUN_INSTALLED" = true ]; then
     INSTALL_FAILED=true
 else
     echo "Skipping Bun package installation because Bun was not installed"
+fi
+
+if [ "$INSTALL_FAILED" != true ] && ! apply_cjk_js_defaults "$NODE_DEST" "$BUN_DEST"; then
+    INSTALL_FAILED=true
 fi
 
 # ==============================

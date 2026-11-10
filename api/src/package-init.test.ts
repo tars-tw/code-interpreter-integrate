@@ -88,6 +88,13 @@ for (const oldRuntimeExists of [false, true]) {
                 path.join(python, '.package-installed'),
                 'installed'
             );
+            const pythonCalls = path.join(root, 'python-calls');
+            fs.mkdirSync(path.join(python, 'bin'));
+            fs.writeFileSync(
+                path.join(python, 'bin/python3'),
+                `#!/bin/bash\nprintf "%s\\n" "$*" >> ${JSON.stringify(pythonCalls)}\n`,
+                { mode: 0o755 }
+            );
             fs.mkdirSync(path.join(packages, 'bash/5.2.0'), {
                 recursive: true,
             });
@@ -191,6 +198,14 @@ for (const oldRuntimeExists of [false, true]) {
                     ).toBe(false);
                 }
             }
+            expect(fs.readFileSync(pythonCalls, 'utf8')).toBe(
+                [
+                    `-I ${root}/python-runtime/cjk_defaults.py\n`,
+                    `-I ${root}/python-runtime/cjk_defaults.py --js ${packages}/node/24.22.1 ${packages}/bun/1.4.4\n`,
+                ]
+                    .join('')
+                    .repeat(2)
+            );
         } finally {
             fs.rmSync(root, { recursive: true, force: true });
         }

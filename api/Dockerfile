@@ -85,6 +85,20 @@ COPY javascript-packages.txt /javascript-packages.txt
 RUN chmod +x /package-init.sh && FORCE_REBUILD=true /package-init.sh
 
 # ============================================================================
+# Traditional Chinese TrueType face for PDF libraries
+# ============================================================================
+# reportlab only embeds TrueType outlines and pdf-lib's fontkit rejects font
+# collections, so neither can use the CFF-based Noto CJK .ttc files. Ship the
+# Taiwan face (index 2) of AR PL UMing as a standalone TTF instead of the
+# whole four-region collection.
+FROM buildpack-deps:bookworm AS cjk-font-builder
+
+COPY docker/apt-install.sh /usr/local/bin/apt-install
+RUN chmod +x /usr/local/bin/apt-install && apt-install fonts-arphic-uming
+COPY docker/fonts/extract-ttc-face.py /tmp/extract-ttc-face.py
+RUN python3 -I /tmp/extract-ttc-face.py /usr/share/fonts/truetype/arphic/uming.ttc 2 /uming-tw.ttf
+
+# ============================================================================
 # Stage 2: Build sandbox rootfs
 # ============================================================================
 FROM oven/bun:1.4.4-debian AS sandbox-build
@@ -129,6 +143,9 @@ RUN [ -x /usr/bin/mawk ] && ln -sf /usr/bin/mawk /usr/bin/awk
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 
 COPY api/config/matplotlibrc /usr/share/matplotlib/matplotlibrc
+COPY api/config/fonts.conf /usr/share/fontconfig/sandbox/fonts.conf
+COPY --from=cjk-font-builder /uming-tw.ttf /usr/share/fonts/truetype/arphic/uming-tw.ttf
+COPY --from=cjk-font-builder /usr/share/doc/fonts-arphic-uming/copyright /usr/share/doc/fonts-arphic-uming/copyright
 
 COPY --from=nsjail-builder /nsjail/nsjail /usr/sbin/nsjail
 COPY --from=nsjail-builder /usr/local/bin/spec-guard /usr/local/bin/spec-guard
